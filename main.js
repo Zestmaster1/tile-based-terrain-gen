@@ -74,8 +74,8 @@ class Tile {
 class Planet {
   constructor() {
     this.allTiles = [];
-    this.waterLevel = Math.random(); // Number(document.getElementById("waterLevel").value);
-    this.temperature = Math.random(); // Number(document.getElementById("temperature").value);
+    this.waterLevel = Number(document.getElementById("waterLevel").value);
+    this.temperature = Number(document.getElementById("temperature").value);
 
     this.tick = 0;
 
@@ -399,47 +399,6 @@ class Planet {
   }
 }
 
-// function start() {
-//   for (let i = 0; i < world.width / tileSize; i++) p.allTiles.push([]);
-
-//   // create tiles and tile positions
-//   for (let i = 0; i < world.width / tileSize; i++) {
-//     for (let j = 0; j < world.height / tileSize; j++) {
-//       let newTile = new Tile(i * tileSize, j * tileSize);
-//       p.allTiles[i].push(newTile);
-//     }
-//   }
-
-//   // compile neighbors for each tile
-//   for (let i = 0; i < p.allTiles.length; i++) {
-//     for (let j = 0; j < p.allTiles[i].length; j++) {
-//       let ind = p.allTiles[i][j];
-
-//       const w = p.allTiles.length;
-//       const h = p.allTiles[0].length;
-
-//       let neighbors = [
-//         p.allTiles[(i + 1) % w][j],
-//         p.allTiles[(i - 1 + w) % w][j],
-//         p.allTiles[i][(j + 1) % h],
-//         p.allTiles[i][(j - 1 + h) % h]
-//       ]
-
-//       ind.neighbors = neighbors;
-//     }
-//   }
-
-//   generateLandmarks();
-//   for (let i = 0; i < 7; i++) smooth();
-
-//   p.allGrass();
-//   p.allTrees();
-//   p.refreshTiles();
-//   step();
-//   drawTerrain();
-//   drawWater();
-// }
-
 function click(x, y) {
   let tile = p.allTiles[Math.floor(x / tileSize)][Math.floor(y / tileSize)];
 
@@ -494,7 +453,7 @@ function drawTerrain() {
   terCtx.globalAlpha = 0.2;
   terCtx.drawImage(rockTexture, 0, 0, terrainCanvas.width, terrainCanvas.height);
   terCtx.globalAlpha = 1;
-  // elevation or moisture
+
   for (let row of p.allTiles) {
     for (let ind of row) {
       if (ind.state === "fertile") {
@@ -545,8 +504,13 @@ Promise.all([
   new Promise(r => tree1.onload = r),
   new Promise(r => tree2.onload = r)
 ]).then(() => {
-  // start();
   p = new Planet();
+
+  p.waterLevel = Math.random();
+  p.temperature = Math.random();
+
+  document.getElementById("waterLevel").value = p.waterLevel;
+  document.getElementById("temperature").value = p.temperature;
 
   p.allGrass();
   p.allTrees();
@@ -556,24 +520,3 @@ Promise.all([
   drawWater();
   step();
 });
-
-// for (let i = 0; i < p.allTiles.length; i++) {
-//   for (let j = 0; j < p.allTiles[i].length; j++) {
-    
-//   }
-// }
-
-// terCtx.fillStyle = `rgb(${ind.elevation * 255}, ${ind.elevation * 240}, ${ind.elevation * 230})`;
-
-      
-      // if (ind.moisture === 1) {
-      //   terCtx.fillStyle = `rgb(0, 20, ${Math.min(1, ind.elevation * 3) * 125 + 130})`;
-      // } else {
-      //   // ctx.fillStyle = `rgb(${ind.elevation * 255}, ${ind.elevation * 255}, ${ind.elevation * 255})`
-      // }
-
-      // if (ind.moisture === 1) {
-      //   ctx.fillStyle = `rgb(255, 0, 0)`;
-      // } else {
-      //   ctx.fillStyle = `rgb(0, 0, ${ind.moisture * 255})`;
-      // }
