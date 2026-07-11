@@ -19,12 +19,35 @@ oreCanvas.width = world.width;
 oreCanvas.height = world.height;
 
 world.addEventListener("click", (e) => {
-  const rect = world.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
+    const rect = world.getBoundingClientRect();
 
-  click(mouseX, mouseY);
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    let worldX = (mouseX + camera.x) % world.width;
+    let worldY = (mouseY + camera.y) % world.height;
+
+    if (worldX < 0) worldX += world.width;
+    if (worldY < 0) worldY += world.height;
+
+    click(worldX, worldY);
 });
+
+const keys = {};
+
+window.addEventListener("keydown", e => {
+  keys[e.key] = true;
+});
+
+window.addEventListener("keyup", e => {
+  keys[e.key] = false;
+});
+
+let camera = {
+  x: 0,
+  y: 0,
+  speed: 10
+};
 
 const rockTexture = new Image();
 rockTexture.src = "textures/rock.png";
@@ -153,8 +176,8 @@ class Planet {
             tile.tree &&
             target.state === "fertile" &&
             !target.tree &&
-            tile.moisture > treeMin &&
-            tile.moisture < treeMax &&
+            target.moisture > treeMin &&
+            target.moisture < treeMax &&
             Math.random() < 0.025
           ) {
             tile.tree = true;
@@ -411,46 +434,82 @@ function click(x, y) {
 function step() {
   requestAnimationFrame(step);
 
-  p.step();
+  if (keys["ArrowLeft"])  camera.x -= camera.speed;
+  if (keys["ArrowRight"]) camera.x += camera.speed;
+  if (keys["ArrowUp"])    camera.y -= camera.speed;
+  if (keys["ArrowDown"])  camera.y += camera.speed;
 
+  if (camera.x >= world.width)  camera.x -= world.width;
+  if (camera.x < 0)             camera.x += world.width;
+
+  if (camera.y >= world.height) camera.y -= world.height;
+  if (camera.y < 0)             camera.y += world.height;
+
+  p.step();
   draw();
+}
+
+function drawWrappedCanvas(ctx, canvas) {
+  for (let ox = -world.width; ox <= world.width; ox += world.width) {
+    for (let oy = -world.height; oy <= world.height; oy += world.height) {
+      ctx.drawImage(
+        canvas,
+        ox - camera.x,
+        oy - camera.y
+      );
+    }
+  }
 }
 
 function draw() {
   ctx.clearRect(0, 0, world.width, world.height);
 
-  for (let row of p.allTiles) {
-    for (let ind of row) {
-      ctx.fillStyle = `rgba(70, 255, 20, ${ind.grass / 4})`;
-      if (ind.grass) ctx.fillRect(ind.x, ind.y, tileSize, tileSize);
-    }
-  }
+  // static layers
+  drawWrappedCanvas(ctx, terrainCanvas);
+  drawWrappedCanvas(ctx, waterCanvas);
+  // drawWrappedCanvas(ctx, oreCanvas);
 
-  // ctx.fillStyle = `rgba(25, 50, 10, 0.1)`;
-  ctx.globalAlpha = 0.75;
-  ctx.beginPath();
-  for (let row of p.allTiles) {
-    for (let ind of row) {
-      if (ind.tree) {
-        let x = ind.treeOffset.x;
-        let y = ind.treeOffset.y;
-        // ctx.moveTo(x, y);
-        // ctx.arc(x, y, 5, 0, Math.PI * 2);
-        // ctx.fillRect(x - 4, y - 4, 8, 8);
+  // grass and trees
+  for (let ox = -world.width; ox <= world.width; ox += world.width) {
+    for (let oy = -world.height; oy <= world.height; oy += world.height) {
 
-        ctx.drawImage(treeTextures[ind.treeTex], x - 8, y - 8, 16, 16);
+      for (let row of p.allTiles) {
+        for (let ind of row) {
+
+          if (ind.grass) {
+            ctx.fillStyle = `rgba(70,255,20,${ind.grass / 4})`;
+            ctx.fillRect(
+              ind.x + ox - camera.x,
+              ind.y + oy - camera.y,
+              tileSize,
+              tileSize
+            );
+          }
+
+          if (ind.tree) {
+            ctx.globalAlpha = 0.75;
+
+            ctx.drawImage(
+              treeTextures[ind.treeTex],
+              ind.treeOffset.x - 8 + ox - camera.x,
+              ind.treeOffset.y - 8 + oy - camera.y,
+              16,
+              16
+            );
+
+            ctx.globalAlpha = 1;
+          }
+        }
       }
     }
   }
-  ctx.globalAlpha = 1;
-  // ctx.fill();
 }
 
 function drawTerrain() {
   terCtx.clearRect(0, 0, world.width, world.height);
   terCtx.fillStyle = "black";
   terCtx.fillRect(0, 0, terrainCanvas.width, terrainCanvas.height);
-  terCtx.globalAlpha = 0.2;
+  terCtx.globalAlpha = 0.25;
   terCtx.drawImage(rockTexture, 0, 0, terrainCanvas.width, terrainCanvas.height);
   terCtx.globalAlpha = 1;
 
@@ -489,9 +548,17 @@ function drawWater() {
 
       if (ind.moisture === 1) {
         if (ind.state === "snow") {
-          waterCtx.fillStyle = `rgb(50, ${Math.min(1, ind.elevation * 2) * 50 + 100}, ${Math.min(1, ind.elevation * 3) * 100 + 155})`;
+          waterCtx.fillStyle = `rgb(
+                                    50,
+                                    ${Math.min(1, ind.elevation * 2) * 50 + 100},
+                                    ${Math.min(1, ind.elevation * 3) * 100 + 155}
+                                  )`;
         } else {
-          waterCtx.fillStyle = `rgb(0, 20, ${Math.min(1, ind.elevation * 3) * 125 + 120})`;
+          waterCtx.fillStyle = `rgb(
+                                    0,
+                                    20,
+                                    ${Math.min(1, ind.elevation * 3) * 125 + 120}
+                                  )`;
         }
         waterCtx.fillRect(ind.x, ind.y, tileSize, tileSize);
       }
@@ -506,14 +573,31 @@ Promise.all([
 ]).then(() => {
   p = new Planet();
 
-  p.waterLevel = Math.random();
-  p.temperature = Math.random();
+  // p.waterLevel = Math.random();
+  // p.temperature = Math.random();
+
+  p.waterLevel = 0.25;
+  p.temperature = 0.5;
 
   document.getElementById("waterLevel").value = p.waterLevel;
   document.getElementById("temperature").value = p.temperature;
 
   p.allGrass();
   p.allTrees();
+
+  let liveTiles = [];
+  for (let i = 0; i < p.allTiles.length; i++) {
+    for (let j = 0; j < p.allTiles[i].length; j++) {
+      let tile = p.allTiles[i][j];
+      if (tile.grass > 0 || tile.tree) liveTiles.push(tile);
+    }
+  }
+  if (liveTiles.length < 200) {
+    for (let tile of liveTiles) {
+      tile.grass = 0;
+      tile.tree = false;
+    }
+  }
   
   drawTerrain();
   // drawOre();
