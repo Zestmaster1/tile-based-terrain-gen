@@ -18,6 +18,9 @@ const oreCtx = oreCanvas.getContext("2d");
 oreCanvas.width = world.width;
 oreCanvas.height = world.height;
 
+const grassPaletteCanvas = document.createElement("canvas");
+const grassPaletteCtx = grassPaletteCanvas.getContext("2d");
+
 world.addEventListener("click", (e) => {
     const rect = world.getBoundingClientRect();
 
@@ -58,16 +61,29 @@ tree1.src = "textures/tree.png";
 const tree2 = new Image();
 tree2.src = "textures/tree2.png";
 
+const cactus1 = new Image();
+cactus1.src = "textures/cactus.png";
+
+const cactus2 = new Image();
+cactus2.src = "textures/cactus2.png";
+
+const grassPalette = new Image();
+grassPalette.src = "textures/grassColorMap.png";
+
 const treeTextures = [tree1, tree2];
+const cactusTextures = [cactus1, cactus2];
 
 let tileSize = 20;
 let grassMoisture = [0.6, 1];
 let treeMoisture = [0.7, 0.9];
+let cactusMoisture = [0.5, 0.6];
 
 let grassMin = Math.min(...grassMoisture);
 let grassMax = Math.max(...grassMoisture);
 let treeMin = Math.min(...treeMoisture);
 let treeMax = Math.max(...treeMoisture);
+let cactusMin = Math.min(...cactusMoisture);
+let cactusMax = Math.max(...cactusMoisture);
 
 let tempCurve = 0.4;
 
@@ -83,12 +99,13 @@ class Tile {
     this.elevation = Math.random();
     this.moisture = 0;
     this.grass = 0;
-    this.tree = false
+    this.tree = false;
     this.treeOffset = {
                         x: this.x + tileSize / 2 + (Math.random() - 0.5) * 10,
                         y: this.y + tileSize / 2 + (Math.random() - 0.5) * 10
                       };
     this.treeTex = Math.round(Math.random());
+    this.cactusTex = Math.round(Math.random());
     this.ore = 0;
     this.state = "fertile";
   }
@@ -99,6 +116,8 @@ class Planet {
     this.allTiles = [];
     this.waterLevel = Number(document.getElementById("waterLevel").value);
     this.temperature = Number(document.getElementById("temperature").value);
+
+    this.grassColor = randomPaletteColor();
 
     this.tick = 0;
 
@@ -173,14 +192,25 @@ class Planet {
           }
 
           if (
-            tile.tree &&
+            tile.tree === "tree" &&
             target.state === "fertile" &&
             !target.tree &&
             target.moisture > treeMin &&
             target.moisture < treeMax &&
             Math.random() < 0.025
           ) {
-            tile.tree = true;
+            tile.tree = "tree";
+          }
+
+          if (
+            tile.tree === "cactus" &&
+            target.state === "fertile" &&
+            !target.tree &&
+            target.moisture > cactusMin &&
+            target.moisture < cactusMax &&
+            Math.random() < 0.05
+          ) {
+            tile.tree = "cactus";
           }
         }
       }
@@ -224,14 +254,26 @@ class Planet {
 
           if (tile.tree) {
             for (let n of tile.neighbors) {
-              if (
-                !n.tree &&
-                n.state === "fertile" &&
-                n.moisture > treeMin &&
-                n.moisture < treeMax &&
-                Math.random() < 0.1
-              ) {
-                nextTrees[n.gridX][n.gridY] = true;
+              if (tile.tree === "tree") {
+                if (
+                  !n.tree &&
+                  n.state === "fertile" &&
+                  n.moisture > treeMin &&
+                  n.moisture < treeMax &&
+                  Math.random() < 0.1
+                ) {
+                  nextTrees[n.gridX][n.gridY] = "tree";
+                }
+              } else if (tile.tree === "cactus") {
+                if (
+                  !n.tree &&
+                  n.state === "fertile" &&
+                  n.moisture > cactusMin &&
+                  n.moisture < cactusMax &&
+                  Math.random() < 0.1
+                ) {
+                  nextTrees[n.gridX][n.gridY] = "cactus";
+                }
               }
             }
           }
@@ -269,10 +311,18 @@ class Planet {
           tile.state = "fertile";
         }
 
-        if (tile.moisture < Math.min(...grassMoisture)) tile.grass = 0;
-        if (tile.moisture > Math.max(...grassMoisture)) tile.grass = 0;
-        if (tile.moisture < Math.min(...treeMoisture)) tile.tree = false;
-        if (tile.moisture > Math.max(...treeMoisture)) tile.tree = false;
+        if (tile.moisture < grassMin) tile.grass = 0;
+        if (tile.moisture > grassMax) tile.grass = 0;
+        
+        if (tile.tree === "tree") {
+          if (tile.moisture < treeMin) tile.tree = false;
+          if (tile.moisture > treeMax) tile.tree = false;
+        }
+
+        if (tile.tree === "cactus") {
+          if (tile.moisture < cactusMin) tile.tree = false;
+          if (tile.moisture > cactusMax) tile.tree = false;
+        }
       }
     }
   }
@@ -309,7 +359,9 @@ class Planet {
     for (let i = 0; i < this.allTiles.length; i++) {
       for (let j = 0; j < this.allTiles[i].length; j++) {
         let tile = this.allTiles[i][j];
-        tile.tree = true;
+        
+        if (tile.moisture > treeMin && tile.moisture < treeMax) tile.tree = "tree";
+        if (tile.moisture > cactusMin && tile.moisture < cactusMax) tile.tree = "cactus";
       }
     }
 
@@ -431,6 +483,19 @@ function click(x, y) {
   p.refreshTiles();
 }
 
+function randomPaletteColor() {
+  const x = Math.floor(Math.random() * grassPalette.width);
+  const y = Math.floor(Math.random() * grassPalette.height);
+
+  const pixel = grassPaletteCtx.getImageData(x, y, 1, 1).data;
+
+  return [
+    pixel[0],
+    pixel[1],
+    pixel[2]
+  ];
+}
+
 function step() {
   requestAnimationFrame(step);
 
@@ -477,7 +542,13 @@ function draw() {
         for (let ind of row) {
 
           if (ind.grass) {
-            ctx.fillStyle = `rgba(70,255,20,${ind.grass / 4})`;
+            // ctx.fillStyle = `rgba(70,255,20,${ind.grass / 4})`;
+            ctx.fillStyle = `rgba(
+                                  ${p.grassColor[0]},
+                                  ${p.grassColor[1]},
+                                  ${p.grassColor[2]},
+                                  ${ind.grass / 4}
+                                )`;
             ctx.fillRect(
               ind.x + ox - camera.x,
               ind.y + oy - camera.y,
@@ -486,7 +557,7 @@ function draw() {
             );
           }
 
-          if (ind.tree) {
+          if (ind.tree === "tree") {
             ctx.globalAlpha = 0.75;
 
             ctx.drawImage(
@@ -495,6 +566,20 @@ function draw() {
               ind.treeOffset.y - 8 + oy - camera.y,
               16,
               16
+            );
+
+            ctx.globalAlpha = 1;
+          }
+
+          if (ind.tree === "cactus") {
+            ctx.globalAlpha = 0.75;
+
+            ctx.drawImage(
+              cactusTextures[ind.cactusTex],
+              ind.treeOffset.x - 6 + ox - camera.x,
+              ind.treeOffset.y - 6 + oy - camera.y,
+              12,
+              12
             );
 
             ctx.globalAlpha = 1;
@@ -569,14 +654,19 @@ function drawWater() {
 Promise.all([
   new Promise(r => rockTexture.onload = r),
   new Promise(r => tree1.onload = r),
-  new Promise(r => tree2.onload = r)
+  new Promise(r => tree2.onload = r),
+  new Promise(r => grassPalette.onload = r)
 ]).then(() => {
+  grassPaletteCanvas.width = grassPalette.width;
+  grassPaletteCanvas.height = grassPalette.height;
+  grassPaletteCtx.drawImage(grassPalette, 0, 0);
+
   p = new Planet();
 
-  // p.waterLevel = Math.random();
-  // p.temperature = Math.random();
+  p.waterLevel = Math.random();
+  p.temperature = Math.random();
 
-  p.waterLevel = 0.25;
+  p.waterLevel = 0.22;
   p.temperature = 0.5;
 
   document.getElementById("waterLevel").value = p.waterLevel;
