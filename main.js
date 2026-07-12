@@ -199,7 +199,7 @@ class Planet {
             target.moisture < treeMax &&
             Math.random() < 0.025
           ) {
-            tile.tree = "tree";
+            target.tree = "tree";
           }
 
           if (
@@ -210,7 +210,7 @@ class Planet {
             target.moisture < cactusMax &&
             Math.random() < 0.05
           ) {
-            tile.tree = "cactus";
+            target.tree = "cactus";
           }
         }
       }
@@ -477,8 +477,9 @@ class Planet {
 function click(x, y) {
   let tile = p.allTiles[Math.floor(x / tileSize)][Math.floor(y / tileSize)];
 
-  tile.grass = 0.1;
-  tile.tree = true;
+  if (tile.moisture < grassMax && tile.moisture > grassMin) tile.grass = 0.1;
+  if (tile.moisture < treeMax && tile.moisture > treeMin) tile.tree = "tree";
+  if (tile.moisture < cactusMax && tile.moisture > cactusMin) tile.tree = "cactus";
 
   p.refreshTiles();
 }
@@ -666,8 +667,8 @@ Promise.all([
   p.waterLevel = Math.random();
   p.temperature = Math.random();
 
-  p.waterLevel = 0.22;
-  p.temperature = 0.5;
+  // p.waterLevel = 0.22;
+  // p.temperature = 0.5;
 
   document.getElementById("waterLevel").value = p.waterLevel;
   document.getElementById("temperature").value = p.temperature;
