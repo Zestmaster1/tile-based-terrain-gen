@@ -13,28 +13,8 @@ const terCtx = terrainCanvas.getContext("2d");
 terrainCanvas.width = world.width;
 terrainCanvas.height = world.height;
 
-const oreCanvas = document.getElementById("ore");
-const oreCtx = oreCanvas.getContext("2d");
-oreCanvas.width = world.width;
-oreCanvas.height = world.height;
-
 const grassPaletteCanvas = document.createElement("canvas");
 const grassPaletteCtx = grassPaletteCanvas.getContext("2d");
-
-world.addEventListener("click", (e) => {
-    const rect = world.getBoundingClientRect();
-
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    let worldX = (mouseX + camera.x) % world.width;
-    let worldY = (mouseY + camera.y) % world.height;
-
-    if (worldX < 0) worldX += world.width;
-    if (worldY < 0) worldY += world.height;
-
-    click(worldX, worldY);
-});
 
 const keys = {};
 
@@ -89,16 +69,6 @@ let tempCurve = 0.4;
 
 let p;
 
-function click(x, y) {
-  let tile = p.allTiles[Math.floor(x / tileSize)][Math.floor(y / tileSize)];
-
-  if (tile.moisture < grassMax && tile.moisture > grassMin) tile.grass = 0.1;
-  if (tile.moisture < treeMax && tile.moisture > treeMin) tile.tree = "tree";
-  if (tile.moisture < cactusMax && tile.moisture > cactusMin) tile.tree = "cactus";
-
-  p.refreshTiles();
-}
-
 function randomPaletteColor() {
   const x = Math.floor(Math.random() * grassPalette.width);
   const y = Math.floor(Math.random() * grassPalette.height);
@@ -147,7 +117,9 @@ function draw() {
 
   // static layers
   drawWrappedCanvas(ctx, terrainCanvas);
-  drawWrappedCanvas(ctx, waterCanvas);
+  // drawWrappedCanvas(ctx, waterCanvas);
+
+  drawWater();
 
   // grass and trees
   for (let ox = -world.width; ox <= world.width; ox += world.width) {

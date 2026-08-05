@@ -122,7 +122,7 @@ class World {
         }
       }
 
-      p.refreshTiles();
+      this.refreshTiles();
     }
 
     // tick 20
@@ -189,8 +189,8 @@ class World {
 
       for (let i = 0; i < this.allTiles.length; i++) {
         for (let j = 0; j < this.allTiles[i].length; j++) {
-          p.allTiles[i][j].grass = nextGrass[i][j];
-          p.allTiles[i][j].tree = nextTrees[i][j];
+          this.allTiles[i][j].grass = nextGrass[i][j];
+          this.allTiles[i][j].tree = nextTrees[i][j];
         }
       }
     }
