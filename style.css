@@ -1,0 +1,12 @@
+canvas {
+  border: 1px solid black;
+  position: absolute;
+}
+
+#canvas-container {
+  position: relative;
+}
+
+.slider-container {
+  margin-top: 500px;
+}

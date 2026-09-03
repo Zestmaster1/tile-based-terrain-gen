@@ -3,49 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-  <style>
-    #canvasContainer {
-      position: relative;
-      height: 1000px;
-    }
-
-    canvas {
-      position: absolute;
-      border: 1px solid black;
-      height: min(80vw, 80vh);
-    }
-
-    input {
-      width: 1500px;
-    }
-
-    body, button {
-      font-size: 1.5em;
-    }
-  </style>
+  <title>Terrain Generator</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div>
-    <label for="waterLevel">water level:</label>
-    <input id="waterLevel" type="range" min="0" max="1" step="0.001" value="0" oninput="p.waterLevelChange()">
-    <br>
-    <label for="temperature">temperature: </label>
-    <input id="temperature" type="range" min="0" max="1" step="0.001" value="0" oninput="p.temperatureChange()">
-    <br>
-    <button onclick="p.allGrass()">fill grass</button>
-    <button onclick="p.allTrees()">fill  trees</button>
-    <br>
-    <button onclick="camera.x = 0; camera.y = 0;">center camera</button>
-  </div>
-  <br>
-  <div id="canvasContainer">
-    <canvas id="terrain"></canvas>
+  <div id="canvas-container">
+    <canvas id="bgCanvas"></canvas>
     <canvas id="world"></canvas>
-    <canvas id="water"></canvas>
+  </div>
+  
+  <br>
+
+  <div class="slider-container">
+    <label for="waterLevel">Water level:</label>
+    <input
+      id="waterLevel"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.2"
+      oninput="userInput();">
+    <br>
+    <label for="temperature">Temperature:</label>
+    <input
+      id="temperature"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.5"
+      oninput="userInput();">
+
+    <div>
+      <button onclick="refreshGrass();">Refresh grass</button>
+    </div>
   </div>
 
+  <script src="config.js"></script>
   <script src="classes.js"></script>
+  <script src="UI.js"></script>
+  <script src="draw.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

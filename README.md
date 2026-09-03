@@ -1,13 +1,13 @@
 # tile-based terrain gen
 
-Algorithm that generates terrain with elevation, temeprature, moisture, and plant life if local conditions are optimal.
+Simple algorithm that generates terrain with elevation, temperature, moisture, and plant life if local conditions are optimal.
 
-What it does:
-
-Grass and trees, and cacti spread to nearby tiles and may sporulate (spread to random tile on map). Grass color is randomly determined upon generation.
+Generates terrain from random elevation noise, with random regional perturbations in elevation, then smoothed.
+Grass will spread to nearby tiles if moisture and temperature are optimal.
+Frozen tiles are represented in white, and desert tiles are represented in orange. Grass cannot grow on these tiles.
 
 Interaction:
 - Use arrow keys to pan
 - Adjust water level and temperature via the sliders
-- Buttons that fill every habitable tile with grass/trees
-- Refresh page to regenerate map
+- Button that fills every habitable tile with grass
+- Refresh page to generate a new random map
